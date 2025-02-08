@@ -4,20 +4,18 @@
   <meta charset="UTF-8" />
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    content="width=device-width, maximum-scale=1.0, user-scalable=no"
   />
   <title>Open for a surprise</title>
 
   <style>
-    /* === Base Page Styles === */
+    /* === Base Page & Layout === */
     html, body {
       margin: 0;
       padding: 0;
     }
-
     body {
-      /* Pastel pinkish-red background */
-      background-color: #f7a1a1;
+      background-color: #f7a1a1; /* pastel pinkish-red */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -27,8 +25,8 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
         Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
       text-align: center;
-      /* This helps Safari on iPhone fill the screen nicely without extra scrollbars */
-      overflow-x: hidden; 
+      /* Helps Safari on iPhone fill the screen nicely without extra scrollbars */
+      overflow-x: hidden;
       overflow-y: hidden;
     }
 
@@ -37,11 +35,10 @@
       max-width: 500px;
       margin: 0 auto;
       position: relative;
-      z-index: 2; 
-      /* so confetti can go “behind” container */
+      z-index: 2; /* allows confetti to go behind */
       display: flex;
       flex-direction: column;
-      align-items: center; /* center items in container */
+      align-items: center; /* center everything in container */
     }
 
     h1 {
@@ -64,12 +61,12 @@
 
     .button-container {
       display: flex;
-      justify-content: center; /* center the buttons horizontally */
+      justify-content: center;
       gap: 15px;
       margin-top: 20px;
       width: 100%;
       max-width: 300px;
-      /* you can also add margin-left/right auto, but justify-content: center suffices */
+      position: relative; /* so we can expand the yes button if needed */
     }
 
     .valentine-button {
@@ -78,20 +75,17 @@
       border: none;
       border-radius: 25px;
       cursor: pointer;
-      transition: all 0.3s;
-      /* Remove any flex: 1 to avoid stretching the buttons */
+      transition: all 0.4s ease; /* smoother transitions */
     }
 
     .yes-button {
       background: #4caf50;
       color: white;
     }
-
     .no-button {
       background: #f44336;
       color: white;
     }
-
     .valentine-button:hover {
       transform: scale(1.05);
     }
@@ -104,19 +98,21 @@
       height: 10px;
       background: #fff;
       pointer-events: none;
-      /* The key here is using a variable for the final horizontal offset */
-      animation: confetti-fall 3s linear forwards;
       z-index: 1;
+      animation-name: swirl;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
     }
 
-    @keyframes confetti-fall {
+    /* “Swirl” confetti animation: each piece rotates and drifts downward */
+    @keyframes swirl {
       0% {
-        transform: translateY(-100%) rotate(0deg);
+        transform: translateY(-10%) rotateZ(0deg);
         opacity: 1;
       }
       100% {
-        /* Move to 110vh to ensure we pass below the viewport */
-        transform: translate3d(var(--endX, 0), 110vh, 0) rotate(720deg);
+        /* Move below the viewport; random drift in X; rotate 720 deg */
+        transform: translateY(110vh) translateX(var(--drift)) rotateZ(720deg);
         opacity: 0;
       }
     }
@@ -145,57 +141,70 @@
       class="cat-gif"
     />
     <div class="button-container">
-      <button class="valentine-button yes-button" onclick="showConfetti()">
+      <button class="valentine-button yes-button" id="yesBtn" onclick="showConfetti()">
         Yes! 💖
       </button>
-      <button class="valentine-button no-button" onclick="hideButton(this)">
+      <button class="valentine-button no-button" id="noBtn" onclick="pressNo()">
         No 😢
       </button>
     </div>
   </div>
 
   <script>
-    function hideButton(button) {
-      button.style.display = "none";
+    // Handle NO click: hide No, make Yes button wide
+    function pressNo() {
+      const noButton = document.getElementById("noBtn");
+      const yesButton = document.getElementById("yesBtn");
+
+      // Hide No button
+      noButton.style.display = "none";
+
+      // Make Yes button stretch to fill container width
+      yesButton.style.width = "100%";
+      yesButton.textContent = "Wait... Are you sure? 🤔";
     }
 
+    // Confetti effect when YES is clicked
     function showConfetti() {
       const colors = ["#ff69b4", "#ffffff", "#4CAF50", "#ffd700"];
-      const confettiCount = 100;
       const title = document.getElementById("title");
 
-      // Change the title text & style
+      // Update the title text
       title.textContent = "Yippieeee!!! 🎉😻";
       title.style.color = "#ffd700";
       title.style.textShadow = "2px 2px 4px rgba(0, 0, 0, 0.5)";
 
-      // Create confetti
+      // Launch confetti
+      const confettiCount = 100;
       for (let i = 0; i < confettiCount; i++) {
         const confetti = document.createElement("div");
         confetti.classList.add("confetti");
 
-        // Random left position
+        // Random left start
         confetti.style.left = Math.random() * 100 + "%";
         // Random color
         confetti.style.backgroundColor =
           colors[Math.floor(Math.random() * colors.length)];
 
-        // Give each confetti a random horizontal drift
-        // between -25vw and +25vw over the course of the fall
-        const endX = (Math.random() - 0.5) * 50; 
-        confetti.style.setProperty("--endX", `${endX}vw`);
+        // Random horizontal drift, e.g. between -20vw and +20vw
+        const drift = (Math.random() - 0.5) * 40;
+        confetti.style.setProperty("--drift", drift + "vw");
 
-        // Random size and shape
-        const size = Math.random() * 8 + 5;
+        // Random size (small squares/circles)
+        const size = Math.random() * 8 + 5; // 5px - 13px
         confetti.style.width = size + "px";
         confetti.style.height = size + "px";
-        // Make half of them circles
+        // Random shape
         confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
+
+        // Random animation duration (3–5s)
+        const duration = (Math.random() * 2) + 3;
+        confetti.style.animationDuration = duration + "s";
 
         document.body.appendChild(confetti);
 
         // Remove confetti after animation ends
-        setTimeout(() => confetti.remove(), 3000);
+        setTimeout(() => confetti.remove(), duration * 1000);
       }
     }
   </script>
